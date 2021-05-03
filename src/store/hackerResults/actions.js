@@ -5,7 +5,7 @@ export function getSearchResult (searchTerm) {
     return function getSearchResult(dispatch){
         dispatch({ type: actionSearch.INIATE_SEARCH_REQUEST })
         
-        axios.get(`http://hn.algolia.com/api/v1/search?query=${searchTerm}`)
+        axios.get(`https://hn.algolia.com/api/v1/search?query=${searchTerm}`)
             .then(result => {
                 dispatch({ type: actionSearch.INIATE_SEARCH_SUCCESS, payload: result.data.hits })
             })
