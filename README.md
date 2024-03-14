@@ -4,7 +4,7 @@ Simple app for searching Hacker News API and displays search results
 
 ## Components
 
-This app uses the following third-part libraries:
+This app uses the following third-party libraries:
 
 - [Axios - API Requests](https://www.npmjs.com/package/axios)
 - [Redux - State Management](https://www.npmjs.com/package/redux)
