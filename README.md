@@ -1,21 +1,21 @@
-# Hacker News API Search
+# Hacker News Search
 
-Simple app for searching Hacker News API and displays search results
+Search [Hacker News](https://news.ycombinator.com/) stories using the [Algolia HN API](https://hn.algolia.com/api). Results display as cards with story text, author, relative timestamps, points, and comment counts. Supports full pagination.
 
-## Components
+## Stack
 
-This app uses the following third-party libraries:
+- [React 18](https://react.dev/) — UI
+- [Redux Toolkit](https://redux-toolkit.js.org/) — state management
+- [Axios](https://www.npmjs.com/package/axios) — HTTP requests
+- [Semantic UI CSS](https://semantic-ui.com/) — styling
+- [Vite](https://vitejs.dev/) — build tool
 
-- [Axios - API Requests](https://www.npmjs.com/package/axios)
-- [Redux - State Management](https://www.npmjs.com/package/redux)
-- [Moment.js - Date Formatting](https://www.npmjs.com/package/moment)
+## Getting Started
 
-## Start Application
-1. Clone `news-api` project
-2. Open up command line
-3. Navigate to `news-api` directory
-4. Run `npm install` to make sure local version is up to date
-5. Run `npm start` to launch application on `localhost:3000`
+1. Clone the repo
+2. `npm install`
+3. `npm run dev` — runs on `http://localhost:5173`
 
-## View Live Demo
-To see a live demo without downloading the project, visit here: https://news-api-search.netlify.app/
+## Live Demo
+
+[news-api-search.netlify.app](https://news-api-search.netlify.app/)
