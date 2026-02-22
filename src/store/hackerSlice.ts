@@ -5,6 +5,7 @@ import type { HackerResult } from '../types/hacker'
 interface HackerState {
   loading: boolean
   searchTerm: string
+  activeTerm: string
   results: HackerResult[]
   error: string | null
   page: number
@@ -14,7 +15,8 @@ interface HackerState {
 
 const initialState: HackerState = {
   loading: false,
-  searchTerm: 'ransomware',
+  searchTerm: '',
+  activeTerm: '',
   results: [],
   error: null,
   page: 0,
@@ -37,12 +39,13 @@ export const fetchSearchResults = createAsyncThunk<
   FetchResult,
   FetchArgs,
   { rejectValue: string }
->('hacker/search', async ({ searchTerm, page }, { rejectWithValue }) => {
+>('hacker/search', async ({ searchTerm, page }, { rejectWithValue, signal }) => {
   try {
     // Use URLSearchParams to properly encode the query and prevent injection
     const params = new URLSearchParams({ query: searchTerm, page: String(page) })
     const response = await axios.get<{ hits: HackerResult[]; nbPages: number; nbHits: number }>(
-      `https://hn.algolia.com/api/v1/search?${params.toString()}`
+      `https://hn.algolia.com/api/v1/search?${params.toString()}`,
+      { signal }
     )
     return {
       hits: response.data.hits,
@@ -50,6 +53,9 @@ export const fetchSearchResults = createAsyncThunk<
       nbHits: response.data.nbHits,
     }
   } catch (err) {
+    if (axios.isCancel(err)) {
+      throw err // Let RTK handle this as an aborted request
+    }
     if (axios.isAxiosError(err)) {
       return rejectWithValue(err.message)
     }
@@ -69,9 +75,13 @@ const hackerSlice = createSlice({
     builder
       .addCase(fetchSearchResults.pending, (state, action) => {
         state.loading = true
-        state.results = []
         state.error = null
         state.page = action.meta.arg.page
+        // Only clear results when the search term changes, not on page turns
+        if (action.meta.arg.searchTerm !== state.activeTerm) {
+          state.results = []
+        }
+        state.activeTerm = action.meta.arg.searchTerm
       })
       .addCase(fetchSearchResults.fulfilled, (state, action) => {
         state.loading = false
@@ -80,6 +90,7 @@ const hackerSlice = createSlice({
         state.nbHits = action.payload.nbHits
       })
       .addCase(fetchSearchResults.rejected, (state, action) => {
+        if (action.meta.aborted) return // Stale request cancelled — a newer one is in flight
         state.loading = false
         state.error = action.payload ?? 'Unknown error'
       })

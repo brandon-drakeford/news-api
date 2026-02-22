@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { fetchSearchResults, setSearchTerm } from '../store/hackerSlice'
 import type { HackerResult } from '../types/hacker'
@@ -30,32 +30,34 @@ const formatRelativeTime = (dateString: string): string => {
   return `${diffYears} year${diffYears !== 1 ? 's' : ''} ago`
 }
 
+const menuButtonStyle: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+  fontSize: 'inherit',
+}
+
 export default function HackerSearch() {
   const dispatch = useAppDispatch()
-  const { loading, results, searchTerm: term, error, page, nbPages, nbHits } = useAppSelector(
-    (state) => state.results
-  )
-  const [debounceTerm, setDebounceTerm] = useState(term)
+  const { loading, results, searchTerm: term, activeTerm, error, page, nbPages, nbHits } =
+    useAppSelector((state) => state.results)
   const [hasSearched, setHasSearched] = useState(false)
+  const pendingRef = useRef<{ abort: () => void } | null>(null)
 
   useEffect(() => {
+    if (!term || term.length < 3) return
     const timerId = setTimeout(() => {
-      if (term && term.length >= 3) {
-        setDebounceTerm(term)
-        setHasSearched(true)
-      }
+      setHasSearched(true)
+      pendingRef.current?.abort()
+      pendingRef.current = dispatch(fetchSearchResults({ searchTerm: term, page: 0 }))
     }, 1000)
     return () => clearTimeout(timerId)
-  }, [term])
-
-  useEffect(() => {
-    if (debounceTerm) {
-      dispatch(fetchSearchResults({ searchTerm: debounceTerm, page: 0 }))
-    }
-  }, [debounceTerm, dispatch])
+  }, [term, dispatch])
 
   const handlePageChange = (newPage: number) => {
-    dispatch(fetchSearchResults({ searchTerm: term, page: newPage }))
+    pendingRef.current?.abort()
+    pendingRef.current = dispatch(fetchSearchResults({ searchTerm: term, page: newPage }))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -76,6 +78,11 @@ export default function HackerSearch() {
                 <span>{result.title}</span>
               )}
             </div>
+            {result.story_text && (
+              <div className="description" style={{ marginTop: '6px', marginBottom: '6px' }}>
+                {stripHtml(result.story_text)}
+              </div>
+            )}
             <div className="meta" style={{ marginTop: '6px' }}>
               {formatRelativeTime(result.created_at)}
             </div>
@@ -113,7 +120,10 @@ export default function HackerSearch() {
 
   return (
     <div style={{ paddingTop: '20px' }}>
-      <div className={`ui search ${loading ? 'loading' : ''}`} style={{ width: '100%', marginBottom: '16px' }}>
+      <div
+        className={`ui search ${loading ? 'loading' : ''}`}
+        style={{ width: '100%', marginBottom: '16px' }}
+      >
         <div className="ui fluid icon input">
           <input
             className="prompt"
@@ -145,34 +155,44 @@ export default function HackerSearch() {
         </div>
       )}
 
-      {!error && hasSearched && !loading && results.length > 0 && (
+      {!error && hasSearched && results.length > 0 && (
         <>
           <div className="ui secondary segment" style={{ marginBottom: '12px' }}>
-            <strong>{nbHits.toLocaleString()}</strong> results for &ldquo;{term}&rdquo;
+            <strong>{nbHits.toLocaleString()}</strong> results for &ldquo;{activeTerm}&rdquo;
           </div>
 
-          <div style={{ paddingBottom: nbPages > 1 ? '16px' : '80px' }}>
+          <div
+            style={{
+              paddingBottom: nbPages > 1 ? '16px' : '80px',
+              opacity: loading ? 0.5 : 1,
+              transition: 'opacity 0.15s ease',
+            }}
+          >
             {renderCards()}
           </div>
 
           {nbPages > 1 && (
             <div className="ui center aligned segment" style={{ paddingBottom: '80px' }}>
               <div className="ui pagination menu">
-                <a
+                <button
+                  style={menuButtonStyle}
                   className={`item ${page === 0 ? 'disabled' : ''}`}
+                  disabled={page === 0}
                   onClick={() => page > 0 && handlePageChange(page - 1)}
                 >
                   <i className="chevron left icon"></i> Previous
-                </a>
+                </button>
                 <div className="item">
                   Page {page + 1} of {nbPages}
                 </div>
-                <a
+                <button
+                  style={menuButtonStyle}
                   className={`item ${page >= nbPages - 1 ? 'disabled' : ''}`}
+                  disabled={page >= nbPages - 1}
                   onClick={() => page < nbPages - 1 && handlePageChange(page + 1)}
                 >
                   Next <i className="chevron right icon"></i>
-                </a>
+                </button>
               </div>
             </div>
           )}
