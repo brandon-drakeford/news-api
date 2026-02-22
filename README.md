@@ -4,7 +4,7 @@ Search [Hacker News](https://news.ycombinator.com/) stories using the [Algolia H
 
 ## Stack
 
-- [React 18](https://react.dev/) — UI
+- [React 19](https://react.dev/) — UI
 - [Redux Toolkit](https://redux-toolkit.js.org/) — state management
 - [Axios](https://www.npmjs.com/package/axios) — HTTP requests
 - [Semantic UI CSS](https://semantic-ui.com/) — styling
