@@ -84,10 +84,11 @@ const hackerSlice = createSlice({
         state.activeTerm = action.meta.arg.searchTerm
       })
       .addCase(fetchSearchResults.fulfilled, (state, action) => {
+        const { hits, nbPages, nbHits } = action.payload
         state.loading = false
-        state.results = action.payload.hits
-        state.nbPages = action.payload.nbPages
-        state.nbHits = action.payload.nbHits
+        state.results = hits
+        state.nbPages = nbPages
+        state.nbHits = nbHits
       })
       .addCase(fetchSearchResults.rejected, (state, action) => {
         if (action.meta.aborted) return // Stale request cancelled — a newer one is in flight
